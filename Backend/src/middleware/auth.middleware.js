@@ -17,6 +17,6 @@ export const protectedRoute = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    return res.status(401).json({ message: "Unauthorized" });
+    throw new ApiError(error.status || 401, error.message || "Unauthorized");
   }
 };

@@ -7,6 +7,7 @@ import { sendResponse } from "../helpers/responseHandler.js";
 const signIn = async (req, res) => {
   try {
     const { fullname, email, password, bio } = req.body;
+
     if (!fullname || !email || !password) {
       throw new ApiError(400, "All fields are required!");
     }
@@ -25,13 +26,12 @@ const signIn = async (req, res) => {
 
     const token = jwtServices.signAccessToken({
       id: data._id,
-      email: user.email,
+      email: data.email,
     });
 
-    userData = {
-      user: newUser,
+    const userData = {
+      user: data,
       token: token,
-      success: true,
     };
 
     return sendResponse(res, 200, "User Registred successfully", userData);

@@ -1,20 +1,12 @@
-import pkg from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import ApiError from "../errors/ApiError.js";
-
-const {
-  sign,
-  verify,
-  decode,
-  JsonWebTokenError,
-  TokenExpiredError,
-  NotBeforeError,
-} = pkg;
+import env from "./env.js";
 
 const jwtServices = {
   signAccessToken: (payload) => {
     const secret = env.JWT_SECRET || "secret";
     const options = {
-      expiresIn: Number(env.JWT_ACCESS_TOKEN_EXPIRES_IN),
+      expiresIn: Number(env.JWT_ACCESS_TOKEN_EXPIRES_IN) || "10h",
     };
 
     return jwt.sign(payload, secret, options);
@@ -24,11 +16,11 @@ const jwtServices = {
     try {
       return jwt.verify(token, env.JWT_SECRET);
     } catch (error) {
-      if (error instanceof TokenExpiredError) {
+      if (error.name === "TokenExpiredError") {
         throw new ApiError(401, "Token expired");
       } else if (
-        error instanceof JsonWebTokenError ||
-        error instanceof NotBeforeError
+        error.name === "JsonWebTokenError" ||
+        error.name === "NotBeforeError"
       ) {
         throw new ApiError(401, "Invalid token");
       }

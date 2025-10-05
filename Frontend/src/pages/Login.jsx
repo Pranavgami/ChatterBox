@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import assets from "../assets/assets";
+import { useAuth } from "../context/AuthContxt";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [currState, setCurrState] = useState("Sign Up"); // "Sign Up" or "Login"
@@ -8,22 +10,29 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [bio, setBio] = useState("");
   const [isDataSubmit, setIsDataSubmit] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const onSubmitHandler = (event) => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const onSubmitHandler = async (event) => {
     event.preventDefault();
 
     if (currState === "Sign Up" && !isDataSubmit) {
       setIsDataSubmit(true);
       return;
     }
-
-    // Final form submission (Step 2 of Sign Up OR Login)
-    console.log({
+    setLoading(true);
+    const success = await login(currState === "Sign Up" ? "signup" : "login", {
       fullname,
       email,
       password,
       bio,
     });
+    if (success) {
+      setLoading(false);
+      navigate("/");
+    }
   };
 
   return (
@@ -98,10 +107,11 @@ const Login = () => {
               required
             />
             <button
+              disabled={loading}
               className="py-3 bg-gradient-to-r from-purple-400 to-violet-600 text-white rounded-md cursor-pointer"
               type="submit"
             >
-              Create Account
+              {loading ? "Creating..." : "Create Account"}
             </button>
           </>
         )}
@@ -126,17 +136,18 @@ const Login = () => {
               required
             />
             <button
+              disabled={loading}
               className="py-3 bg-gradient-to-r from-purple-400 to-violet-600 text-white rounded-md cursor-pointer"
               type="submit"
             >
-              Login Now
+              {loading ? "Loggin in..." : "Login"}
             </button>
           </>
         )}
 
         {/* Terms Checkbox */}
         <div className="flex items-center gap-2 text-sm text-gray-500">
-          <input type="checkbox" required />
+          <input type="checkbox" />
           <p>Agree to terms of use & Privacy-policy</p>
         </div>
 

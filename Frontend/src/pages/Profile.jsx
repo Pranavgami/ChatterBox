@@ -1,24 +1,36 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import assets from "../assets/assets";
+import { useAuth } from "../context/AuthContxt";
 
 const ProfilePage = () => {
-  const [selectedImg, setSelectedImg] = useState(null);
-  const [bio, setBio] = useState(null);
-  const [name, setName] = useState(null);
+  const { authUser, updateProfile } = useAuth();
 
+  const [selectedImg, setSelectedImg] = useState(null);
+  const [bio, setBio] = useState(authUser.bio);
+  const [name, setName] = useState(authUser.fullname);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    console.log({
-      selectedImg,
-      bio,
-      name,
-    });
-
-    navigate("/");
+    if (!selectedImg) {
+      setLoading(true);
+      const isSuccess = await updateProfile({ fullname: name, bio });
+      if (isSuccess) {
+        navigate("/");
+      }
+      setLoading(false);
+      return;
+    }
+    const reader = new FileReader();
+    reader.readAsDataURL(selectedImg);
+    reader.onloadend = async () => {
+      setLoading(true);
+      await updateProfile({ fullname: name, bio, profilePic: reader.result });
+      setLoading(false);
+      navigate("/");
+    };
   };
 
   return (
@@ -71,14 +83,17 @@ const ProfilePage = () => {
 
           <button
             type="submit"
+            disabled={loading}
             className="bg-gradient-to-r from-purple-400 to-violet-600 text-white p-2 rounded-md text-lg cursor-pointer"
           >
-            Save
+            {loading ? "Updating..." : "Save"}
           </button>
         </form>
         <img
-          src={assets.logo_icon}
-          className="max-w-44 aspect-square rounded-full m-10 max-sm:mb-10"
+          src={authUser?.profilePic || assets.logo_icon}
+          className={`max-w-44 aspect-square ${
+            authUser?.profilePic && "rounded-full"
+          } m-10 max-sm:mb-10`}
           alt="logo"
         />
       </div>

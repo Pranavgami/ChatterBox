@@ -22,7 +22,7 @@ const RightSidebar = ({ selectedUser }) => {
           <p>Media</p>
           <div className="mt-2 max-h-[200px] overflow-y-scroll grid grid-cols-2 gap-4 opacity-80">
             {imagesDummyData.map((url, index) => (
-              <div className="">
+              <div className="" key={index}>
                 <div
                   key={index}
                   className="cursor-pointer rounded"
