@@ -3,10 +3,11 @@ import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import { Toaster } from "react-hot-toast";
-import { useAuth } from "./context/AuthContxt";
+import { useAuth } from "./context/AuthContext";
 
 export default function App() {
   const { authUser, loading } = useAuth();
+  console.log("authUser after login:", authUser);
 
   if (loading) {
     return (

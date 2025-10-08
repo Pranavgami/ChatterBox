@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import assets from "../assets/assets";
-import { useAuth } from "../context/AuthContxt";
+import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
@@ -23,15 +23,27 @@ const Login = () => {
       return;
     }
     setLoading(true);
-    const success = await login(currState === "Sign Up" ? "signup" : "login", {
-      fullname,
-      email,
-      password,
-      bio,
-    });
-    if (success) {
+    try {
+      const success = await login(
+        currState === "Sign Up" ? "signup" : "login",
+        {
+          fullname,
+          email,
+          password,
+
+          bio,
+        }
+      );
+      if (success) {
+        console.log("Login");
+        navigate("/");
+      }
+
       setLoading(false);
-      navigate("/");
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
     }
   };
 

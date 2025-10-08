@@ -2,28 +2,28 @@ import { sendResponse } from "../helpers/responseHandler.js";
 import User from "../models/users.js";
 import Message from "../models/message.js";
 import { io, userSocketMap } from "../app.js";
+import ApiError from "../errors/ApiError.js";
+import cloudinary from "../lib/cloudinary.js";
 
 const getUserById = async (req, res) => {
   try {
-    const userId = req.User.id;
-    const filteredUsers = await User.find({ _id: { $ne: { userId } } }).select(
+    const userId = req.user.id;
+    const filteredUsers = await User.find({ _id: { $ne: userId } }).select(
       "-password"
     );
     const unseenMessage = {};
     const promices = filteredUsers.map(async (user) => {
       const message = await Message.find({
         seen: false,
-        $or: [
-          { senderId: userId, to: user._id },
-          { recieverId: user._id, to: userId },
-        ],
+        senderId: user._id,
+        receiverId: userId,
       });
       if (message.length > 0) {
-        unseenMessage[user._id] = await message.length;
+        unseenMessage[user._id] = message.length;
       }
     });
     await Promise.all(promices);
-    return sendResponse(200, "Data retrived successfully", {
+    return sendResponse(res, 200, "Data retrived successfully", {
       users: filteredUsers,
       unseenMessage,
     });
@@ -39,17 +39,17 @@ const getMessages = async (req, res) => {
 
     const messages = await Message.find({
       $or: [
-        { senderId: userId, recieverId: id },
-        { senderId: id, recieverId: userId },
+        { senderId: userId, receiverId: id },
+        { senderId: id, receiverId: userId },
       ],
     });
 
     await Message.updateMany(
-      { senderId: id, recieverId: userId, seen: false },
+      { senderId: id, receiverId: userId, seen: false },
       { $set: { seen: true } }
     );
 
-    return sendResponse(res, 200, "Data retrived successfully", { messages });
+    return sendResponse(res, 200, "Data retrived successfully", messages);
   } catch (err) {
     throw new ApiError(err.status || 500, err.message || "Server Error");
   }
@@ -60,7 +60,7 @@ const marksAsSeen = async (req, res) => {
     const id = req.params.id;
     const userId = req.user.id;
     await Message.updateMany(
-      { senderId: id, recieverId: userId, seen: false },
+      { senderId: id, receiverId: userId, seen: false },
       { $set: { seen: true } }
     );
     return sendResponse(res, 200, "Messages marked as seen");
@@ -73,26 +73,28 @@ const sendMessage = async (req, res) => {
   try {
     const { text, image } = req.body;
     const senderId = req.user.id;
-    const { id: recieverId } = req.params;
-    let imageUrl = null;
+    const { id: receiverId } = req.params;
+
+    let uploadedImage = null;
     if (image) {
       const uploadResponse = await cloudinary.uploader.upload(image);
-      imageUrl = uploadResponse.secure_url;
+      uploadedImage = uploadResponse.secure_url;
     }
+
     const newMessage = await Message.create({
       senderId,
-      recieverId,
-      text,
-      image: imageUrl,
+      receiverId,
+      text: text || "",
+      image: uploadedImage,
+      seen: false,
     });
 
-    // Emit the message to the receiver if they are online
-    const receiverSocketId = userSocketMap[recieverId];
+    const receiverSocketId = userSocketMap[receiverId];
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("new-message", newMessage);
     }
 
-    return sendResponse(res, 200, "Message sent successfully", { newMessage });
+    return sendResponse(res, 200, "Message sent successfully", newMessage);
   } catch (err) {
     throw new ApiError(err.status || 500, err.message || "Server Error");
   }

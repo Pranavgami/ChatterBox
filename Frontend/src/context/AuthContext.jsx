@@ -36,6 +36,7 @@ function AuthProvider({ children }) {
           connectSocket(response.data.data);
         }
       } catch (error) {
+        console.log(error);
         toast.error(error.response?.data?.message || "Session expired");
         setAuthUser(null);
       }
@@ -56,6 +57,8 @@ function AuthProvider({ children }) {
         localStorage.setItem("token", response.data.token);
         toast.success(response.data.message);
         return true;
+      } else {
+        return false;
       }
     } catch (error) {
       toast.error(error.response.data.message || "Something went wrong");
@@ -69,9 +72,9 @@ function AuthProvider({ children }) {
     setOnlineUsers([]);
     axios.defaults.headers.common["Authorization"] = null;
     localStorage.removeItem("token");
-    toast.success("Logged out successfully");
     socket?.disconnect();
     setSocket(null);
+    toast.success("Logged out successfully");
   };
 
   const updateProfile = async (profileData) => {
@@ -79,13 +82,12 @@ function AuthProvider({ children }) {
       const response = await axios.put(`/api/auth/update-profile`, profileData);
 
       if (response.data.success) {
-        console.log(response.data);
         setAuthUser(response.data.data);
         toast.success("Profile updated successfully");
         return true;
       }
     } catch (error) {
-      console.log(error, "<<Error");
+      console.log(error);
       toast.error(error.response?.data?.message || "Something went wrong");
     }
   };

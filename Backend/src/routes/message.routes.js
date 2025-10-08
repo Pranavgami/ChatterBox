@@ -13,19 +13,19 @@ router.get(
 );
 
 router.get(
-  "/messages/:id",
+  "/:id",
   protectedRoute,
   catchAsyncHandler(messageController.getMessages)
 );
 
 router.put(
-  "/marks/:id",
+  "/mark/:id",
   protectedRoute,
   catchAsyncHandler(messageController.marksAsSeen)
 );
 
 router.post(
-  "/send",
+  "/send/:id",
   protectedRoute,
   catchAsyncHandler(messageController.sendMessage)
 );
