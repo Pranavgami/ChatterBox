@@ -19,4 +19,10 @@ router.get(
   catchAsyncHandler(userController.checkAuth)
 );
 
+router.get(
+  "/search",
+  protectedRoute,
+  catchAsyncHandler(userController.searchUsers)
+);
+
 export default router;

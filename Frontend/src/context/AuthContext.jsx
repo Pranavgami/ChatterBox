@@ -47,22 +47,37 @@ function AuthProvider({ children }) {
   const login = async (state, credentails) => {
     try {
       const response = await axios.post(`/api/auth/${state}`, credentails);
+      
       if (response.data.success) {
-        setAuthUser(response.data.user);
-        connectSocket(response.data.user);
-        setToken(response.data.token);
-        axios.defaults.headers.common[
-          "Authorization"
-        ] = `Bearer ${response.data.token}`;
-        localStorage.setItem("token", response.data.token);
+        const token = response.data.token;
+        const user = response.data.data; 
+
+        // Validate user data before proceeding
+        if (!user || !user.id) {
+          toast.error("Invalid user data received");
+          return false;
+        }
+        
+        // Set everything in the correct order
+        localStorage.setItem("token", token);
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        setToken(token);
+        setAuthUser(user);
+        
+        connectSocket(user);
         toast.success(response.data.message);
+        
         return true;
       } else {
+        console.log("AuthContext - Login failed, response not successful");
+        toast.error("Login failed");
         return false;
       }
     } catch (error) {
-      toast.error(error.response.data.message || "Something went wrong");
+      console.error("AuthContext - Login error:", error);
+      toast.error(error.response?.data?.message || "Something went wrong");
       setAuthUser(null);
+      return false;
     }
   };
 
@@ -93,12 +108,21 @@ function AuthProvider({ children }) {
   };
 
   const connectSocket = (userData) => {
-    if (!userData || socket?.connected) return;
+    if (!userData || !userData._id || socket?.connected) {
+      console.log("connectSocket - Invalid userData or socket already connected:", { userData: !!userData, hasId: !!userData?._id, socketConnected: socket?.connected });
+      return;
+    }
+    
+    console.log("connectSocket - Connecting with user ID:", userData._id);
+    
     const newSocket = io(BACKEND_URL, {
       query: { userId: userData._id },
       transports: ["websocket"],
     });
     newSocket.connect();
+
+    newSocket.emit("setup", userData._id);
+
     setSocket(newSocket);
     newSocket.on("online-users", (users) => {
       setOnlineUsers(users);

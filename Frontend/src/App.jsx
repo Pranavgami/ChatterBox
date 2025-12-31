@@ -7,7 +7,7 @@ import { useAuth } from "./context/AuthContext";
 
 export default function App() {
   const { authUser, loading } = useAuth();
-  console.log("authUser after login:", authUser);
+
 
   if (loading) {
     return (
@@ -16,6 +16,8 @@ export default function App() {
       </div>
     );
   }
+
+
   return (
     <div
       className={`bg-[url('./src/assets/bgImage.svg')] bg-center bg-contain `}
@@ -24,15 +26,15 @@ export default function App() {
       <Routes>
         <Route
           path="/"
-          element={authUser ? <Home /> : <Navigate to="/login" />}
+          element={authUser ? <Home /> : <Navigate to="/login" replace />}
         ></Route>
         <Route
           path="/login"
-          element={!authUser ? <Login /> : <Navigate to="/" />}
+          element={!authUser ? <Login /> : <Navigate to="/" replace />}
         ></Route>
         <Route
           path="/profile"
-          element={authUser ? <Profile /> : <Navigate to="/login" />}
+          element={authUser ? <Profile /> : <Navigate to="/login" replace />}
         ></Route>
       </Routes>
     </div>

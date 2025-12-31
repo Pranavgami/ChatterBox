@@ -7,19 +7,26 @@ const messageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    receiverId: {
+    conversationId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Conversation",
       required: true,
     },
     text: {
       type: String,
       default: "",
     },
-    seen: {
-      type: Boolean,
-      default: false,
+    status: {
+      type: String,
+      enum: ["sent", "delivered", "seen"],
+      default: "sent",
     },
+    readBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     image: {
       type: String,
       default: null,

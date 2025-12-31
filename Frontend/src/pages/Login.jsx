@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import assets from "../assets/assets";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -12,8 +12,15 @@ const Login = () => {
   const [isDataSubmit, setIsDataSubmit] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { login, authUser } = useAuth();
   const navigate = useNavigate();
+
+  // Handle navigation when authUser changes
+  useEffect(() => {
+    if (authUser) {
+      navigate("/", { replace: true });
+    }
+  }, [authUser, navigate]);
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
@@ -22,7 +29,9 @@ const Login = () => {
       setIsDataSubmit(true);
       return;
     }
+    
     setLoading(true);
+    
     try {
       const success = await login(
         currState === "Sign Up" ? "signup" : "login",
@@ -30,20 +39,15 @@ const Login = () => {
           fullname,
           email,
           password,
-
           bio,
         }
       );
-      if (success) {
-        console.log("Login");
-        navigate("/");
-      }
-
-      setLoading(false);
+      
     } catch (err) {
-      console.log(err);
+      console.error("Login error:", err);
     } finally {
       setLoading(false);
+      console.log("Login - Setting loading to false");
     }
   };
 

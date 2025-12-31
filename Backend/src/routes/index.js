@@ -1,10 +1,10 @@
 import { Router } from "express";
-import messageRoutes from "./message.routes.js";
+import conversasionRoutes from "./conversasions.routes.js";
 import userRoutes from "./user.routes.js";
 
 const router = Router();
 
 router.use("/auth", userRoutes);
-router.use("/messages", messageRoutes);
+router.use("/conversations", conversasionRoutes);
 
 export default router;

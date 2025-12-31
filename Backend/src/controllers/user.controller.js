@@ -83,9 +83,14 @@ const login = async (req, res) => {
       throw new ApiError(400, "All fields are required!");
     }
     const user = await User.findOne({ email });
-    if (!user || !(await user.matchPassword(password))) {
+    if (!user) {
+      throw new ApiError(404, "User not found.");
+    }
+
+    if (!(await user.matchPassword(password))) {
       throw new ApiError(401, "Invalid email or password");
     }
+
     const token = jwtServices.signAccessToken({
       id: user._id,
       email: user.email,
@@ -168,9 +173,27 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const searchUsers = async (req, res) => {
+  const keyword = req.query.q
+    ? {
+        $or: [
+          { fullname: { $regex: req.query.q, $options: "i" } },
+          { email: { $regex: req.query.q, $options: "i" } },
+        ],
+      }
+    : {};
+
+  const users = await User.find(keyword)
+    .find({ _id: { $ne: req.user.id } })
+    .select("-password");
+
+  return sendResponse(res, 200, "Users found", users);
+};
+
 export default {
   signIn,
   login,
   updateProfile,
   checkAuth,
+  searchUsers,
 };

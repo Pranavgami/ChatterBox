@@ -3,38 +3,17 @@ import { createServer } from "http";
 import { connectDB } from "./lib/db.js";
 import env from "./utils.js/env.js";
 import apiRoutes from "./routes/index.js";
-import { Server } from "socket.io";
 import cors from "cors";
 import { errorHandler } from "./errors/ErrorHandler.js";
 import { logger } from "./lib/logger.js";
+import { initializeSocket } from "./lib/socket.js";
 
 const app = express();
 const httpServer = createServer(app);
 
 app.use(cors());
 
-export const io = new Server(httpServer, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  },
-});
-
-export const userSocketMap = {};
-
-io.on("connection", (socket) => {
-  const userId = socket.handshake.query.userId;
-  console.log("User connected", userId);
-  if (userId) userSocketMap[userId] = socket.id;
-
-  io.emit("online-users", Object.keys(userSocketMap));
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected", userId);
-    delete userSocketMap[userId];
-    io.emit("online-users", Object.keys(userSocketMap));
-  });
-});
+const io = initializeSocket(httpServer);
 
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));

@@ -1,5 +1,3 @@
-import ApiError from "./ApiError.js";
-
 class AppError extends Error {
   status;
   error;
@@ -20,21 +18,45 @@ export const errorHandler = (err, req, res, next) => {
     message: "Internal Server Error",
   };
 
-  if (err instanceof AppError) {
+  // **Handle Prisma Errors**
+  if (err) {
+    switch (err.code) {
+      case "P2002": // Unique constraint violation
+        response = {
+          success: false,
+          status: 400,
+          message: `Duplicate field value: ${err.meta?.target}`,
+        };
+        break;
+      case "P2025": // Record not found
+        response = {
+          success: false,
+          status: 404,
+          message: `Record not found: ${err.meta?.cause || "Unknown"}`,
+        };
+        break;
+      default:
+        response = {
+          success: false,
+          status: 500,
+          message: `${err.message}`,
+        };
+        break;
+    }
+  }
+
+  // **Handle Custom App Errors**
+  else if (err instanceof AppError) {
     response = {
       success: false,
       status: err.status,
       message: err.message,
       error: err.error || null,
     };
-  } else if (err instanceof ApiError) {
-    response = {
-      success: false,
-      status: err.status,
-      message: err.message,
-      error: err.data || null,
-    };
-  } else {
+  }
+
+  // **Handle Other Errors**
+  else {
     response = {
       success: false,
       status: err.status || 500,
